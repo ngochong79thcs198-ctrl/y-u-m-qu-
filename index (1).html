@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Mẹ Yêu Thương ❤️✨</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0d001a; 
+            overflow: hidden; 
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+        }
+        #canvas-container { 
+            width: 100vw; 
+            height: 100vh; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 10;
+            pointer-events: none;
+            width: 85%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animation Đếm ngược */
+        .countdown {
+            font-size: 6rem;
+            font-weight: 900;
+            color: #ff80bf;
+            text-shadow: 0 0 20px #ff3399, 0 0 50px #ff007f, 0 0 100px #ff007f;
+            animation: zoomPulse 1s infinite alternate cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        /* Animation Text Gõ Chữ & Glow */
+        .message {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 10px #ff99cc, 0 0 20px #ff3399, 0 0 30px #ff007f;
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.5;
+            margin-top: 20px;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 2rem;
+            background-color: #ff3399;
+            margin-left: 5px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes zoomPulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+    <!-- Thư viện Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="overlay">
+        <div id="countdown" class="countdown">3</div>
+        <div class="message">
+            <span id="text"></span><span id="cursor" class="typing-cursor"></span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. KHỞI TẠO CẢNH THREE.JS 3D ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 30;
+
+        // --- 2. TẠO QUẢ CẦU ÁNH SÁNG ÁM ÁP (STARFIELD) ---
+        const starsCount = 3500;
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(starsCount * 3);
+        const starColors = new Float32Array(starsCount * 3);
+
+        for (let i = 0; i < starsCount; i++) {
+            const r = 15 + Math.random() * 25;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+
+            starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            starPos[i * 3 + 2] = r * Math.cos(phi);
+
+            starColors[i * 3] = 1.0; 
+            starColors[i * 3 + 1] = 0.5 + Math.random() * 0.4; 
+            starColors[i * 3 + 2] = 0.7 + Math.random() * 0.3; 
+        }
+
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        const starMat = new THREE.PointsMaterial({
+            size: 0.32,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.85
+        });
+
+        const starField = new THREE.Points(starGeo, starMat);
+        scene.add(starField);
+
+        // --- 3. TẠO TRÁI TIM 3D LỚN LUNG LINH ---
+        const heartCount = 2500;
+        const heartGeo = new THREE.BufferGeometry();
+        const heartPos = new Float32Array(heartCount * 3);
+
+        for (let i = 0; i < heartCount; i++) {
+            const t = Math.random() * Math.PI * 2;
+            const u = (Math.random() - 0.5) * Math.PI;
+            
+            let x = 16 * Math.pow(Math.sin(t), 3);
+            let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+            let z = u * 10;
+
+            const scale = 0.55;
+            heartPos[i * 3] = x * scale;
+            heartPos[i * 3 + 1] = y * scale;
+            heartPos[i * 3 + 2] = z * scale;
+        }
+
+        heartGeo.setAttribute('position', new THREE.BufferAttribute(heartPos, 3));
+
+        const heartMat = new THREE.PointsMaterial({
+            size: 0.38,
+            color: 0xff3385,
+            transparent: true,
+            opacity: 0
+        });
+
+        const heartMesh = new THREE.Points(heartGeo, heartMat);
+        scene.add(heartMesh);
+
+        // --- 4. TẠO TẤM ẢNH MẸ 3D TRONG KHÔNG GIAN (MOM PHOTO 3D MESH) ---
+        const textureLoader = new THREE.TextureLoader();
+        // Bạn thay đường dẫn ảnh me.jpg ở đây hoặc đổi tên ảnh của bạn thành me.jpg
+        const momTexture = textureLoader.load('me.jpg', undefined, undefined, function(err) {
+            // Trường hợp không tìm thấy file me.jpg, tự động dùng ảnh mặc định
+            momTexture.image.src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=60';
+        });
+
+        // Tạo hình tròn làm khung ảnh
+        const momGeometry = new THREE.CircleGeometry(6, 64);
+        const momMaterial = new THREE.MeshBasicMaterial({
+            map: momTexture,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0
+        });
+        const momMesh = new THREE.Mesh(momGeometry, momMaterial);
+        momMesh.position.set(0, 2, 0); // Đặt ở giữa phía trên chữ
+        scene.add(momMesh);
+
+        // Tạo viền sáng 3D bao quanh ảnh
+        const ringGeo = new THREE.RingGeometry(6.1, 6.4, 64);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xff3399,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.position.set(0, 2, 0);
+        scene.add(ringMesh);
+
+        // --- 5. ANIMATION VÒNG LẶP ---
+        let clock = new THREE.Clock();
+        let showFinalScene = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Xoay nhẹ vũ trụ sao
+            starField.rotation.y = time * 0.04;
+            starField.rotation.x = time * 0.02;
+
+            if (showFinalScene) {
+                // Trái tim 3D xoay và đập
+                heartMesh.rotation.y = time * 0.6;
+                const beat = 1 + Math.sin(time * 4) * 0.1; 
+                heartMesh.scale.set(beat, beat, beat);
+
+                if (heartMat.opacity < 0.95) {
+                    heartMat.opacity += 0.01;
+                }
+
+                // --- ẢNH MẸ 3D XOAY TRÒN & TỎA SÁNG ---
+                momMesh.rotation.y = time * 1.2;  // Hiệu ứng xoay tròn 3D
+                ringMesh.rotation.y = time * 1.2; // Viền xoay cùng ảnh
+
+                // Hiện dần ảnh Mẹ và viền 3D
+                if (momMaterial.opacity < 1) {
+                    momMaterial.opacity += 0.015;
+                    ringMat.opacity += 0.015;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- 6. LỜI NHẮN VỀ MẸ & KÍCH HOẠT SCENE 3D ---
+        const textEl = document.getElementById('text');
+        const cursorEl = document.getElementById('cursor');
+        const countdownEl = document.getElementById('countdown');
+
+        const messages = [
+            "Đi khắp thế gian không ai tốt bằng Mẹ...",
+            "Gánh nặng cuộc đời không ai khổ bằng Mẹ...",
+            "Cảm ơn Mẹ vì tất cả sự hy sinh thầm lặng... ❤️",
+            "CHÚC MẸ LUÔN MẠNH KHỎE VÀ BÌNH AN! 🌸✨"
+        ];
+
+        let msgIdx = 0;
+        let charIdx = 0;
+
+        let count = 3;
+        const countTimer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownEl.innerText = count;
+            } else {
+                clearInterval(countTimer);
+                countdownEl.style.display = 'none';
+                typeNextMessage();
+            }
+        }, 1000);
+
+        function typeNextMessage() {
+            if (msgIdx < messages.length) {
+                const currentMsg = messages[msgIdx];
+                
+                if (charIdx < currentMsg.length) {
+                    textEl.innerHTML += currentMsg.charAt(charIdx);
+                    charIdx++;
+                    setTimeout(typeNextMessage, 85);
+                } else {
+                    setTimeout(() => {
+                        if (msgIdx < messages.length - 1) {
+                            textEl.innerHTML = '';
+                            charIdx = 0;
+                            msgIdx++;
+                            typeNextMessage();
+                        } else {
+                            cursorEl.style.display = 'none';
+                            // Kích hoạt trái tim và ảnh Mẹ 3D xoay tròn
+                            showFinalScene = true; 
+                        }
+                    }, 2200);
+                }
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
